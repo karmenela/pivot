@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-glob:
-description:
 ---
 
+ Use CSS variables for all colors to enable easy theme switching.

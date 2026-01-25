@@ -4,7 +4,7 @@ import { useGame } from '@/context/GameContext';
 import { scenarios } from '@/data/scenarios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Rocket, Lightbulb, Target, Gem, TrendingUp, Book } from 'lucide-react';
+import { Rocket, Lightbulb, Target, Gem, TrendingUp, Book, Plus, Minus } from 'lucide-react';
 
 // Dictionary Data
 const DICTIONARY_TERMS = [
@@ -139,8 +139,24 @@ export const GameScreen = () => {
                                     onClick={() => onOptionSelect(option)}
                                     className="group relative bg-white border-2 border-gray-200 hover:border-blue-400 p-6 md:p-8 rounded-2xl text-left transition-all hover:-translate-y-1 hover:shadow-md active:translate-y-0 active:shadow-sm flex flex-col justify-between min-h-[160px]"
                                 >
-                                    <div className="font-normal text-black mb-4 text-lg md:text-xl leading-snug">{option.text}</div>
-                                    <div className={`text-base font-bold ${option.cost > 0 ? 'text-red-500' : option.cost < 0 ? 'text-green-500' : 'text-gray-400'}`}>
+                                    <div className="mb-4">
+                                        <div className="font-normal text-black text-lg md:text-xl leading-snug mb-3">{option.text}</div>
+
+                                        {option.pros && (
+                                            <div className="flex items-start gap-2 text-sm text-green-700 mb-1">
+                                                <Plus size={16} className="mt-0.5 shrink-0" strokeWidth={3} />
+                                                <span>{option.pros}</span>
+                                            </div>
+                                        )}
+                                        {option.cons && (
+                                            <div className="flex items-start gap-2 text-sm text-red-700">
+                                                <Minus size={16} className="mt-0.5 shrink-0" strokeWidth={3} />
+                                                <span>{option.cons}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className={`text-base font-bold ${option.cost > 0 ? 'text-red-500' : option.cost < 0 ? 'text-green-500' : 'gray-400'}`}>
                                         {option.cost > 0 ? `-$${option.cost.toLocaleString()}` : option.cost < 0 ? `+$${Math.abs(option.cost).toLocaleString()}` : 'Ücretsiz'}
                                     </div>
                                 </button>

@@ -1,6 +1,5 @@
 ---
 trigger: always_on
-glob:
-description:
 ---
 
+Always use semantic HTML5 elements for better accessibility and SEO.
