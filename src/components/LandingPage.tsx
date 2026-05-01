@@ -2,7 +2,7 @@
 
 import { useGame } from '@/context/GameContext';
 import { motion } from 'framer-motion';
-import { Rocket } from 'lucide-react';
+import Image from 'next/image';
 
 export const LandingPage = () => {
     const { setGameStatus } = useGame();
@@ -10,30 +10,47 @@ export const LandingPage = () => {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-white text-center px-4">
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="max-w-2xl"
+                className="max-w-md w-full"
             >
-                <div className="mb-8 flex justify-center">
-                    <div className="p-6 bg-blue-50 rounded-6xl rotate-12 inline-block">
-                        <Rocket size={64} className="text-blue-600" />
-                    </div>
-                </div>
-                <h1 className="text-4xl md:text-6xl font-extrabold text-gray-800 mb-6 tracking-tight">
-                    Girişimcilik <span className="text-blue-600">Simülasyonu</span>
+                {/* Unicorn Mascot */}
+                <motion.div
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                    className="flex justify-center mb-2"
+                >
+                    <Image
+                        src="/unicorn.png"
+                        alt="Pivot Maskotu"
+                        width={220}
+                        height={220}
+                        className="drop-shadow-xl"
+                        priority
+                    />
+                </motion.div>
+
+                <h1 className="text-4xl md:text-5xl font-black text-[#3c3c3c] mb-3 tracking-tight leading-tight">
+                    Pivot
                 </h1>
-                <p className="text-lg md:text-xl text-gray-600 mb-10 leading-relaxed">
-                    Sıfırdan bir şirket kur, stratejik kararlar al ve başarıya ulaş.
-                    Finansal okuryazarlığı ve risk yönetimini eğlenerek öğren.
+                <p className="text-lg text-[#777] font-bold mb-2">
+                    Girişimcilik Simülasyonu
+                </p>
+                <p className="text-base text-[#AFAFAF] mb-10 leading-relaxed font-semibold">
+                    Stratejik kararlar al, şirketini büyüt ve başarıya ulaş!
                 </p>
 
                 <button
                     onClick={() => setGameStatus('ONBOARDING')}
-                    className="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-10 rounded-2xl shadow-[0_4px_0_rgb(21,128,61)] active:shadow-none active:translate-y-1 transition-all text-xl uppercase tracking-wider"
+                    className="btn-green w-full font-black py-4 px-10 rounded-2xl text-xl uppercase tracking-wide"
                 >
                     OYUNA BAŞLA
                 </button>
+
+                <p className="mt-6 text-[#AFAFAF] text-sm font-bold">
+                    Ücretsiz · Türkçe · 10 dakika
+                </p>
             </motion.div>
         </div>
     );
