@@ -1,31 +1,37 @@
 # Pivot - Entrepreneurship Simulation Game
 
 Pivot is an interactive scenario-based entrepreneurship game built with Next.js.
-Players create a startup, make high-impact business decisions, manage budget pressure, and navigate multiple outcomes such as growth, exit, quiz completion, or bankruptcy.
+Players found a startup, name their CEO, make high-impact business decisions, manage budget and equity pressure, and navigate multiple outcomes such as a successful exit, bankruptcy, or finishing the journey with a downloadable certificate.
 
 ## Features
 
-- Multi-screen game flow: Landing -> Onboarding -> Story -> Gameplay -> Tips -> Quiz -> Result
+- Multi-screen game flow: Landing → Onboarding → Story → Gameplay → Tips → Quiz → Result
 - Branching startup scenarios with decision consequences
-- Budget, score, and decision history tracking
-- Positive/negative financial events (investments, costs, exits)
+- Budget, equity, score, and decision history tracking
+- Funding system: raise capital when cash runs low by choosing between a bank loan, angel investor, crowdfunding, or a government grant — each with its own trade-offs
+- Long-term funding consequences: recurring interest/operating costs and one-time audit fees that hit your budget as you keep playing
+- Equity dilution that reduces your share of exit proceeds when you take investment
+- Per-decision quiz checkpoints to reinforce business concepts
 - Bankruptcy fail state when cash reaches zero
-- Educational business terms and strategy tips embedded in scenarios
+- Personalized completion certificate, downloadable as a PDF
 
 ## Tech Stack
 
-- Next.js 16 (App Router, Turbopack in development)
+- Next.js 16 (App Router)
 - React 19 + TypeScript
 - Tailwind CSS 4
 - Framer Motion
 - Lucide React
+- html2canvas + jsPDF (certificate export)
 
 ## Project Structure
 
-- `src/app`: App entry, layout, and global styles
-- `src/components`: Game screens (`LandingPage`, `Onboarding`, `StoryScreen`, `GameScreen`, `TipsScreen`, `QuizScreen`, `ResultScreen`, `BankruptScreen`)
-- `src/context/GameContext.tsx`: Central game state and progression logic
+- `src/app`: App entry (`page.tsx` screen router), layout, providers, and global styles
+- `src/components`: Game screens (`LandingPage`, `Onboarding`, `StoryScreen`, `GameScreen`, `TipsScreen`, `QuizScreen`, `FinanceIntroScreen`, `FinanceScreen`, `ResultScreen`, `BankruptScreen`, `CertificatePreview`)
+- `src/context/GameContext.tsx`: Central game state, progression, and finance logic
 - `src/data/scenarios.ts`: Scenario tree, options, costs, and educational info
+- `src/data/finance.ts`: Funding options, equity costs, and long-term cost rules
+- `src/lib/downloadCertificate.ts`: Renders the certificate element to a downloadable PDF
 - `public`: Static assets
 
 ## Getting Started
@@ -59,16 +65,20 @@ Open [http://127.0.0.1:3000](http://127.0.0.1:3000) in your browser.
 
 ## Core Gameplay Logic
 
-- Initial budget starts at `$200,000`
-- Every decision changes budget and score
-- If budget drops to `0` or below, the game switches to the `BANKRUPT` screen
-- Reaching an `END` scenario transitions to `QUIZ`, then `FINISHED`
+- Initial budget starts at `$50,000` with `100%` equity
+- Every decision changes budget and score, and is recorded in history
+- When budget drops below the funding threshold (`$10,000`), a one-time funding round becomes available
+- Funding options add cash but carry consequences: equity dilution (angel), recurring costs (bank loan, crowdfunding), or a one-time fee (government grant)
+- Taking equity-based funding reduces your share of exit proceeds — investors take their cut on exit
+- Reaching an `END` scenario (exit) leads to the quiz, then the `FINISHED` result screen
+- If budget reaches `0` or below at any point, the game switches to the `BANKRUPT` screen
+- The result screen issues a personalized certificate that can be downloaded as a PDF
 - `resetGame()` resets all progression and returns the user to `LANDING`
 
 ## Notes
 
-- Scenario content is currently authored in Turkish in `src/data/scenarios.ts`
-- The game can be expanded by adding more scenario nodes and screen-level UX polish
+- Scenario and finance content is currently authored in Turkish in `src/data/scenarios.ts` and `src/data/finance.ts`
+- The game can be expanded by adding more scenario nodes, funding options, and screen-level UX polish
 
 ## License
 
