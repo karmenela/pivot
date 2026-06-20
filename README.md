@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Pivot - Entrepreneurship Simulation Game
+
+Pivot is an interactive scenario-based entrepreneurship game built with Next.js.
+Players create a startup, make high-impact business decisions, manage budget pressure, and navigate multiple outcomes such as growth, exit, quiz completion, or bankruptcy.
+
+## Features
+
+- Multi-screen game flow: Landing -> Onboarding -> Story -> Gameplay -> Tips -> Quiz -> Result
+- Branching startup scenarios with decision consequences
+- Budget, score, and decision history tracking
+- Positive/negative financial events (investments, costs, exits)
+- Bankruptcy fail state when cash reaches zero
+- Educational business terms and strategy tips embedded in scenarios
+
+## Tech Stack
+
+- Next.js 16 (App Router, Turbopack in development)
+- React 19 + TypeScript
+- Tailwind CSS 4
+- Framer Motion
+- Lucide React
+
+## Project Structure
+
+- `src/app`: App entry, layout, and global styles
+- `src/components`: Game screens (`LandingPage`, `Onboarding`, `StoryScreen`, `GameScreen`, `TipsScreen`, `QuizScreen`, `ResultScreen`, `BankruptScreen`)
+- `src/context/GameContext.tsx`: Central game state and progression logic
+- `src/data/scenarios.ts`: Scenario tree, options, costs, and educational info
+- `public`: Static assets
 
 ## Getting Started
 
-First, run the development server:
+### 1) Install dependencies
+
+```bash
+npm install
+```
+
+### 2) Run the app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+If your environment has host/network interface issues, run:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run dev -- --hostname 127.0.0.1
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://127.0.0.1:3000](http://127.0.0.1:3000) in your browser.
 
-## Learn More
+## Available Scripts
 
-To learn more about Next.js, take a look at the following resources:
+- `npm run dev` - Start development server
+- `npm run build` - Build production bundle
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Core Gameplay Logic
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Initial budget starts at `$200,000`
+- Every decision changes budget and score
+- If budget drops to `0` or below, the game switches to the `BANKRUPT` screen
+- Reaching an `END` scenario transitions to `QUIZ`, then `FINISHED`
+- `resetGame()` resets all progression and returns the user to `LANDING`
 
-## Deploy on Vercel
+## Notes
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Scenario content is currently authored in Turkish in `src/data/scenarios.ts`
+- The game can be expanded by adding more scenario nodes and screen-level UX polish
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+This project is currently private and has no explicit license file.

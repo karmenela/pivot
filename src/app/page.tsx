@@ -9,6 +9,8 @@ import { ResultScreen } from '@/components/ResultScreen';
 import { TipsScreen } from '@/components/TipsScreen';
 import { BankruptScreen } from '@/components/BankruptScreen';
 import { QuizScreen } from '@/components/QuizScreen';
+import { FinanceIntroScreen } from '@/components/FinanceIntroScreen';
+import { FinanceScreen } from '@/components/FinanceScreen';
 
 export default function Home() {
   const { gameStatus } = useGame();
@@ -26,6 +28,10 @@ export default function Home() {
       return <TipsScreen />;
     case 'QUIZ':
       return <QuizScreen />;
+    case 'FINANCE_INTRO':
+      return <FinanceIntroScreen />;
+    case 'FINANCE':
+      return <FinanceScreen />;
     case 'FINISHED':
       return <ResultScreen />;
     case 'BANKRUPT':

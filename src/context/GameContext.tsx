@@ -1,25 +1,45 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { scenarios } from '../data/scenarios';
+import { FINANCE_OPTIONS, FINANCE_THRESHOLD, FinanceId } from '../data/finance';
+
+type GameStatus =
+    | 'LANDING'
+    | 'ONBOARDING'
+    | 'STORY'
+    | 'PLAYING'
+    | 'TIPS'
+    | 'QUIZ'
+    | 'FINANCE_INTRO'
+    | 'FINANCE'
+    | 'FINISHED'
+    | 'BANKRUPT';
 
 type GameState = {
     companyName: string;
     ceoName: string;
     logo: string;
     budget: number;
-    currentScenarioId: number | string;
-    history: string[]; // Log of decisions
+    equity: number;
+    currentScenarioId: number;
+    quizScenarioId: number | null;
+    history: string[];
     score: number;
     hasUsedFinance: boolean;
-    gameStatus: 'LANDING' | 'ONBOARDING' | 'STORY' | 'PLAYING' | 'TIPS' | 'QUIZ' | 'FINISHED' | 'BANKRUPT';
+    gameStatus: GameStatus;
+    isLastScenario: boolean;
+    canAfford: (cost: number) => boolean;
+    isFinanceAvailable: boolean;
     setCompanyName: (name: string) => void;
     setCeoName: (name: string) => void;
     setLogo: (logo: string) => void;
-    makeDecision: (cost: number, nextId: number | string, feedback: string) => void;
-    applyFinance: (amount: number) => void;
-    proceedToNext: () => void;
-    setGameStatus: (status: 'LANDING' | 'ONBOARDING' | 'STORY' | 'PLAYING' | 'TIPS' | 'QUIZ' | 'FINISHED' | 'BANKRUPT') => void;
+    makeDecision: (cost: number, nextId: number | null, feedback: string) => void;
+    openFinance: () => void;
+    proceedToFinanceSelection: () => void;
+    applyFinance: (financeId: FinanceId) => void;
+    proceedToQuiz: () => void;
+    proceedFromQuiz: () => void;
+    setGameStatus: (status: GameStatus) => void;
     resetGame: () => void;
 };
 
@@ -29,57 +49,145 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     const [companyName, setCompanyName] = useState('');
     const [ceoName, setCeoName] = useState('');
     const [logo, setLogo] = useState('rocket');
-    const [budget, setBudget] = useState(200000);
-    const [currentScenarioId, setCurrentScenarioId] = useState<number | string>(1);
+    const [budget, setBudget] = useState(50000);
+    const [equity, setEquity] = useState(100);
+    const [currentScenarioId, setCurrentScenarioId] = useState(1);
+    const [quizScenarioId, setQuizScenarioId] = useState<number | null>(null);
     const [history, setHistory] = useState<string[]>([]);
     const [score, setScore] = useState(0);
     const [hasUsedFinance, setHasUsedFinance] = useState(false);
-    const [gameStatus, setGameStatus] = useState<'LANDING' | 'ONBOARDING' | 'STORY' | 'PLAYING' | 'TIPS' | 'QUIZ' | 'FINISHED' | 'BANKRUPT'>('LANDING');
-    const [pendingNextId, setPendingNextId] = useState<number | string | null>(null);
+    const [financeType, setFinanceType] = useState<FinanceId | null>(null);
+    const [decisionCount, setDecisionCount] = useState(0);
+    const [grantFeeApplied, setGrantFeeApplied] = useState(false);
+    const [gameStatus, setGameStatus] = useState<GameStatus>('LANDING');
+    const [pendingNextId, setPendingNextId] = useState<number | null>(null);
+    const [isLastScenario, setIsLastScenario] = useState(false);
 
-    const makeDecision = (cost: number, nextId: number | string, feedback: string) => {
-        const newBudget = budget - cost;
+    const canAfford = (cost: number) => budget + cost >= 0;
+
+    const isFinanceAvailable =
+        budget < FINANCE_THRESHOLD && !hasUsedFinance && gameStatus === 'PLAYING';
+
+    const applyLongTermCosts = (newDecisionCount: number, currentBudget: number): number => {
+        if (!financeType) return currentBudget;
+
+        const option = FINANCE_OPTIONS.find((o) => o.id === financeType);
+        if (!option) return currentBudget;
+
+        let updated = currentBudget;
+
+        if (option.recurring && newDecisionCount > 0 && newDecisionCount % option.recurring.every === 0) {
+            updated += option.recurring.amount;
+            setHistory((prev) => [...prev, `${option.recurring!.label}: ${formatMoney(option.recurring!.amount)}`]);
+        }
+
+        if (
+            option.oneTime &&
+            !grantFeeApplied &&
+            newDecisionCount >= option.oneTime.afterDecisions
+        ) {
+            updated += option.oneTime.amount;
+            setGrantFeeApplied(true);
+            setHistory((prev) => [...prev, `${option.oneTime!.label}: ${formatMoney(option.oneTime!.amount)}`]);
+        }
+
+        return updated;
+    };
+
+    const makeDecision = (cost: number, nextId: number | null, feedback: string) => {
+        if (!canAfford(cost)) return;
+
+        const isExit = nextId === null;
+        const effectiveCost = isExit && cost > 0 ? Math.round(cost * (equity / 100)) : cost;
+
+        let newBudget = budget + effectiveCost;
+        const newDecisionCount = decisionCount + 1;
+
+        if (isExit && cost > 0 && equity < 100) {
+            const investorShare = cost - effectiveCost;
+            setHistory((prev) => [
+                ...prev,
+                feedback,
+                `Exit geliri: $${cost.toLocaleString()} — Senin payın (%${equity}): $${effectiveCost.toLocaleString()}. Yatırımcı payı: $${investorShare.toLocaleString()}.`,
+            ]);
+        } else {
+            setHistory((prev) => [...prev, feedback]);
+        }
+
         setBudget(newBudget);
-        setHistory((prev) => [...prev, feedback]);
-        setScore((prev) => prev + 100 + (cost < 0 ? 500 : 0));
+        setDecisionCount(newDecisionCount);
+        setScore((prev) => prev + 100 + (effectiveCost > 0 ? 500 : 0));
+        setQuizScenarioId(currentScenarioId);
+
+        newBudget = applyLongTermCosts(newDecisionCount, newBudget);
+        setBudget(newBudget);
 
         if (newBudget <= 0) {
             setGameStatus('BANKRUPT');
             return;
         }
 
-        if (nextId === 'END') {
-            setPendingNextId('END');
-        } else {
-            setPendingNextId(nextId);
-        }
+        setPendingNextId(nextId);
+        setIsLastScenario(nextId === null);
         setGameStatus('TIPS');
     };
 
-    const applyFinance = (amount: number) => {
-        setBudget((prev) => prev + amount);
-        setHasUsedFinance(true);
+    const openFinance = () => {
+        if (!isFinanceAvailable) return;
+        setGameStatus('FINANCE_INTRO');
     };
 
-    const proceedToNext = () => {
-        if (pendingNextId === 'END') {
-            setGameStatus('QUIZ');
-        } else if (pendingNextId) {
+    const proceedToFinanceSelection = () => {
+        setGameStatus('FINANCE');
+    };
+
+    const applyFinance = (financeId: FinanceId) => {
+        const option = FINANCE_OPTIONS.find((o) => o.id === financeId);
+        if (!option || hasUsedFinance) return;
+
+        setBudget((prev) => prev + option.amount);
+        setEquity((prev) => Math.max(0, prev - option.equityCost));
+        setFinanceType(financeId);
+        setHasUsedFinance(true);
+        setHistory((prev) => [
+            ...prev,
+            `${option.name} seçildi: +$${option.amount.toLocaleString()}${option.equityCost > 0 ? `, hisse -%${option.equityCost}` : ''}.`,
+        ]);
+        setGameStatus('PLAYING');
+    };
+
+    const proceedToQuiz = () => {
+        setGameStatus('QUIZ');
+    };
+
+    const proceedFromQuiz = () => {
+        if (isLastScenario || pendingNextId === null) {
+            setGameStatus('FINISHED');
+        } else {
             setCurrentScenarioId(pendingNextId);
             setGameStatus('PLAYING');
         }
         setPendingNextId(null);
+        setQuizScenarioId(null);
+        setIsLastScenario(false);
     };
 
     const resetGame = () => {
         setCompanyName('');
         setCeoName('');
         setLogo('rocket');
-        setBudget(200000);
+        setBudget(50000);
+        setEquity(100);
         setCurrentScenarioId(1);
+        setQuizScenarioId(null);
         setHistory([]);
         setScore(0);
         setHasUsedFinance(false);
+        setFinanceType(null);
+        setDecisionCount(0);
+        setGrantFeeApplied(false);
+        setPendingNextId(null);
+        setIsLastScenario(false);
         setGameStatus('LANDING');
     };
 
@@ -90,11 +198,16 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                 ceoName,
                 logo,
                 budget,
+                equity,
                 currentScenarioId,
+                quizScenarioId,
                 history,
                 score,
                 hasUsedFinance,
                 gameStatus,
+                isLastScenario,
+                canAfford,
+                isFinanceAvailable,
                 setCompanyName: (name) => {
                     setCompanyName(name);
                     setGameStatus('STORY');
@@ -102,8 +215,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                 setCeoName,
                 setLogo,
                 makeDecision,
+                openFinance,
+                proceedToFinanceSelection,
                 applyFinance,
-                proceedToNext,
+                proceedToQuiz,
+                proceedFromQuiz,
                 setGameStatus,
                 resetGame,
             }}
@@ -112,6 +228,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         </GameContext.Provider>
     );
 };
+
+function formatMoney(amount: number): string {
+    if (amount >= 0) return `+$${amount.toLocaleString()}`;
+    return `-$${Math.abs(amount).toLocaleString()}`;
+}
 
 export const useGame = () => {
     const context = useContext(GameContext);

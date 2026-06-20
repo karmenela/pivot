@@ -6,9 +6,10 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 
 export const TipsScreen = () => {
-    const { currentScenarioId, proceedToNext } = useGame();
+    const { currentScenarioId, proceedToQuiz, history } = useGame();
 
     const scenario = scenarios.find(s => s.id === currentScenarioId);
+    const latestFeedback = history[history.length - 1];
 
     if (!scenario) return null;
 
@@ -40,7 +41,10 @@ export const TipsScreen = () => {
                     <div className="bubble-tail-outer" />
                     <div className="bubble-tail-inner" />
 
-                    <p className="text-base font-bold text-[#3c3c3c] leading-relaxed">
+                    <p className="text-base font-bold text-[#3c3c3c] leading-relaxed mb-3">
+                        {latestFeedback}
+                    </p>
+                    <p className="text-sm font-semibold text-[#777] leading-relaxed border-t-2 border-[#58CC02]/30 pt-3">
                         {scenario.info}
                     </p>
                 </motion.div>
@@ -69,13 +73,13 @@ export const TipsScreen = () => {
                 {/* Continue button */}
                 <motion.button
                     type="button"
-                    onClick={proceedToNext}
+                    onClick={proceedToQuiz}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
                     className="btn-green w-full font-black py-4 rounded-2xl text-lg uppercase tracking-wide"
                 >
-                    Devam Et
+                    Devam Et — Quize Geç
                 </motion.button>
             </motion.div>
         </div>

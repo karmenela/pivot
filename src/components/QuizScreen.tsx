@@ -1,120 +1,82 @@
 'use client';
 
 import { useGame } from '@/context/GameContext';
+import { scenarios, getAllDefinitions, Definition } from '@/data/scenarios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-
-const QUIZ_TERMS = [
-    {
-        term: 'Unicorn',
-        correct: 'Değeri 1 milyar doları aşan girişim şirketi.',
-        wrong: [
-            'Yatırımcıların şirketten çıkış yapma stratejisi.',
-            'İlk ürün versiyonunu piyasaya sürmek.',
-            'Şirketin aylık harcama hızı.',
-        ],
-    },
-    {
-        term: 'Pivot',
-        correct: 'İş modelini veya ürünü pazar şartlarına göre köklü biçimde değiştirmek.',
-        wrong: [
-            'Şirketi halka arz etmek.',
-            'Bir müşteriyi kazanmak için yapılan harcama.',
-            'Deneyimli yatırımcıların erken aşama girişimlere yatırım yapması.',
-        ],
-    },
-    {
-        term: 'Burn Rate',
-        correct: 'Şirketin her ay kasasından harcadığı nakit miktarı.',
-        wrong: [
-            'Şirketin toplam piyasa değeri.',
-            'Yatırım turları arasındaki süre.',
-            'Bir kullanıcının şirkete ömür boyu getirdiği gelir.',
-        ],
-    },
-    {
-        term: 'MVP',
-        correct: 'Ürünün en temel, çalışır hali — gereksiz özelliklerden arındırılmış ilk versiyon.',
-        wrong: [
-            'Şirketin en değerli çalışanı.',
-            'Yatırımcıya sunulan finansal rapor.',
-            'Aylık aktif kullanıcı sayısı.',
-        ],
-    },
-    {
-        term: 'Runway',
-        correct: 'Mevcut kasayla şirketin kaç ay daha ayakta kalabileceği süre.',
-        wrong: [
-            'Ürünün piyasaya çıkış tarihine kalan süre.',
-            'Yatırımcıyla yapılan toplantı takvimi.',
-            'Çalışan başına düşen gelir.',
-        ],
-    },
-    {
-        term: 'CAC',
-        correct: 'Bir müşteriyi kazanmak için harcanan pazarlama ve satış bütçesi.',
-        wrong: [
-            'Şirketin toplam müşteri sayısı.',
-            'Aylık yinelenen gelir miktarı.',
-            'Girişimcinin sahip olduğu hisse oranı.',
-        ],
-    },
-    {
-        term: 'Exit',
-        correct: 'Girişimcinin şirket hisselerini satarak projeden çıkış yapması.',
-        wrong: [
-            'Şirketin yeni bir pazara girmesi.',
-            'Çalışanın işten ayrılma süreci.',
-            'Ürünün beta sürümünün yayına alınması.',
-        ],
-    },
-    {
-        term: 'Melek Yatırımcı',
-        correct: 'Erken aşama girişimlere kendi sermayesiyle yatırım yapan bireysel yatırımcı.',
-        wrong: [
-            'Devlet destekli girişim fonu.',
-            'Halka açık borsada işlem gören fon.',
-            'Girişimciye mentorluk yapan deneyimli kurucu.',
-        ],
-    },
-];
 
 function shuffle<T>(arr: T[]): T[] {
     return [...arr].sort(() => Math.random() - 0.5);
 }
 
+function buildQuestions(definitions: Definition[]) {
+    const count = Math.min(3, Math.max(2, definitions.length));
+    const selected = shuffle(definitions).slice(0, count);
+    const allDescriptions = getAllDefinitions().map((d) => d.description);
+
+    return selected.map((def) => {
+        const wrongPool = allDescriptions.filter((desc) => desc !== def.description);
+        const wrong = shuffle(wrongPool).slice(0, 3);
+        return {
+            term: def.term,
+            correct: def.description,
+            options: shuffle([def.description, ...wrong]),
+        };
+    });
+}
+
 type AnswerState = 'idle' | 'correct' | 'wrong';
 
 export const QuizScreen = () => {
-    const { setGameStatus, ceoName } = useGame();
+    const { quizScenarioId, proceedFromQuiz, isLastScenario, ceoName } = useGame();
 
-    const [questions] = useState(() => shuffle(QUIZ_TERMS).slice(0, 6));
+    const scenario = scenarios.find((s) => s.id === quizScenarioId);
+    const questions = useMemo(
+        () => (scenario ? buildQuestions(scenario.definitions) : []),
+        [scenario]
+    );
+
     const [current, setCurrent] = useState(0);
     const [selected, setSelected] = useState<string | null>(null);
     const [answerState, setAnswerState] = useState<AnswerState>('idle');
     const [correctCount, setCorrectCount] = useState(0);
     const [done, setDone] = useState(false);
-    const [options, setOptions] = useState<string[]>([]);
 
     useEffect(() => {
-        if (questions[current]) {
-            setOptions(shuffle([questions[current].correct, ...questions[current].wrong]));
-        }
-    }, [current, questions]);
+        setCurrent(0);
+        setSelected(null);
+        setAnswerState('idle');
+        setCorrectCount(0);
+        setDone(false);
+    }, [quizScenarioId]);
+
+    if (!scenario || questions.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
+                <button
+                    type="button"
+                    onClick={proceedFromQuiz}
+                    className="btn-green font-black py-4 px-8 rounded-2xl text-lg uppercase tracking-wide"
+                >
+                    Devam Et
+                </button>
+            </div>
+        );
+    }
 
     const handleSelect = (option: string) => {
         if (answerState !== 'idle') return;
         setSelected(option);
         const isCorrect = option === questions[current].correct;
         setAnswerState(isCorrect ? 'correct' : 'wrong');
-        if (isCorrect) setCorrectCount(c => c + 1);
+        if (isCorrect) setCorrectCount((c) => c + 1);
 
         setTimeout(() => {
             if (current + 1 >= questions.length) {
                 setDone(true);
             } else {
-                setCurrent(c => c + 1);
+                setCurrent((c) => c + 1);
                 setSelected(null);
                 setAnswerState('idle');
             }
@@ -124,7 +86,7 @@ export const QuizScreen = () => {
     const progress = ((current + (answerState !== 'idle' ? 1 : 0)) / questions.length) * 100;
 
     if (done) {
-        const perfect = correctCount === questions.length;
+        const allCorrect = correctCount === questions.length;
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
                 <motion.div
@@ -137,28 +99,31 @@ export const QuizScreen = () => {
                         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                         className="flex justify-center mb-6"
                     >
-                        <Image src="/unicorn.png" alt="Pivot" width={160} height={160} className="drop-shadow-xl" />
+                        <Image src="/unicorn.png" alt="Pivot" width={120} height={120} className="drop-shadow-xl" />
                     </motion.div>
 
-                    <h2 className="text-3xl font-black text-[#3c3c3c] mb-2">
-                        {perfect ? 'Mükemmel!' : 'Aferin!'}
+                    <h2 className="text-2xl font-black text-[#3c3c3c] mb-2">
+                        {allCorrect ? 'Mükemmel!' : 'Güzel!'}
                     </h2>
-                    <p className="text-[#AFAFAF] font-bold mb-8">
-                        {ceoName ? `${ceoName}, ` : ''}{questions.length} sorudan {correctCount} tanesini doğru bildin.
+                    <p className="text-[#AFAFAF] font-bold mb-6">
+                        {ceoName ? `${ceoName}, ` : ''}{questions.length} kelimeden {correctCount} tanesini doğru bildin.
                     </p>
 
-                    <div className="flex justify-center gap-4 mb-10">
+                    <div className="flex justify-center gap-3 mb-8">
                         {questions.map((_, i) => (
-                            <div key={i} className={`w-3 h-3 rounded-full ${i < correctCount ? 'bg-[#58CC02]' : 'bg-[#FF4B4B]'}`} />
+                            <div
+                                key={i}
+                                className={`w-3 h-3 rounded-full ${i < correctCount ? 'bg-[#58CC02]' : 'bg-[#FF4B4B]'}`}
+                            />
                         ))}
                     </div>
 
                     <button
                         type="button"
-                        onClick={() => setGameStatus('FINISHED')}
+                        onClick={proceedFromQuiz}
                         className="btn-green w-full font-black py-4 rounded-2xl text-lg uppercase tracking-wide"
                     >
-                        Sonuclara Git
+                        {isLastScenario ? 'Sonuçlara Git' : 'Sonraki Soru'}
                     </button>
                 </motion.div>
             </div>
@@ -169,23 +134,21 @@ export const QuizScreen = () => {
 
     return (
         <div className="flex flex-col min-h-screen bg-white">
-            {/* Header */}
             <header className="px-4 py-4 border-b-2 border-[#E5E5E5]">
                 <div className="flex items-center gap-3 max-w-lg mx-auto">
                     <span className="text-xs font-black text-[#AFAFAF] uppercase tracking-wide shrink-0">
                         {current + 1} / {questions.length}
                     </span>
                     <div className="flex-1 h-3 bg-[#E5E5E5] rounded-full overflow-hidden">
-                        <div
-                            className="progress-bar"
-                            style={{ width: `${progress}%` }}
-                        />
+                        <div className="progress-bar" style={{ width: `${progress}%` }} />
                     </div>
                 </div>
+                <p className="text-center text-xs font-black text-[#1CB0F6] uppercase tracking-widest mt-2">
+                    {scenario.phase} — Kelime Quizi
+                </p>
             </header>
 
             <main className="flex-1 flex flex-col px-4 py-6 max-w-lg mx-auto w-full">
-                {/* Unicorn + instruction */}
                 <div className="flex items-end gap-3 mb-8">
                     <Image src="/unicorn.png" alt="Pivot" width={80} height={80} className="drop-shadow-md shrink-0" />
                     <div className="bg-white border-2 border-[#E5E5E5] rounded-2xl rounded-bl-sm p-4 flex-1">
@@ -194,7 +157,6 @@ export const QuizScreen = () => {
                     </div>
                 </div>
 
-                {/* Options */}
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={current}
@@ -203,7 +165,7 @@ export const QuizScreen = () => {
                         exit={{ opacity: 0, x: -20 }}
                         className="flex flex-col gap-3"
                     >
-                        {options.map((option) => {
+                        {q.options.map((option) => {
                             const isSelected = selected === option;
                             const isCorrect = option === q.correct;
 
