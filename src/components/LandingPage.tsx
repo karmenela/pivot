@@ -15,25 +15,22 @@ export const LandingPage = () => {
                 transition={{ duration: 0.5 }}
                 className="max-w-md w-full"
             >
-                {/* Unicorn Mascot */}
+                {/* Pivot Logo */}
                 <motion.div
                     animate={{ y: [0, -10, 0] }}
                     transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                     className="flex justify-center mb-2"
                 >
                     <Image
-                        src="/unicorn.png"
-                        alt="Pivot Maskotu"
-                        width={220}
-                        height={220}
+                        src="/pivot-logo.png"
+                        alt="Pivot"
+                        width={280}
+                        height={280}
                         className="drop-shadow-xl"
                         priority
                     />
                 </motion.div>
 
-                <h1 className="text-4xl md:text-5xl font-black text-[#3c3c3c] mb-3 tracking-tight leading-tight">
-                    Pivot
-                </h1>
                 <p className="text-lg text-[#777] font-bold mb-2">
                     Girişimcilik Simülasyonu
                 </p>

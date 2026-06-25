@@ -20,9 +20,6 @@ export const StoryScreen = () => {
             text: `Bugün ${companyName} ile o efsaneyi yazmaya başlıyoruz.\n\nAnca dikkat et — her büyük girişim, bir noktada yön değiştirmek zorunda kalmıştır. Buna "Pivot" diyoruz. Ben de adımı oradan aldım!`,
         },
         {
-            text: `Instagram başta bir check-in uygulamasıydı. Slack bir oyun şirketiydi. YouTube bir flört sitesiydi.\n\nHepsi doğru anda pivot etti ve tarihe geçti.`,
-        },
-        {
             text: `Sana 50.000$ melek yatırımı yapıldı, ${ceoName}.\n\nHer kararın bu parayı eritebilir — ya da katlayabilir. Yanlış seçimler seni iflasa sürükler. Doğru seçimler seni Unicorn yapar.\n\nHazır mısın?`,
         },
     ];
